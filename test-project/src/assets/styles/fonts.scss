@@ -1,0 +1,18 @@
+@mixin open-sans {
+   font-family: 'Open Sans', sans-serif;
+   font-style: normal;
+}
+
+@mixin info-text {
+   @include open-sans();
+   font-size: 1.5rem;
+   line-height: 2.5rem;
+   font-weight: 400;
+}
+
+@mixin text-default {
+   @include open-sans();
+   font-size: 1rem;
+   line-height: 1.5rem;
+   font-weight: 500;
+}
