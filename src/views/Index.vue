@@ -79,7 +79,7 @@ export default {
          try {
             this.isLoading = true;
             const response = await axios(
-               'https://jsonplaceholder.typicode.com/posts?limit=20'
+               'https://jsonplaceholder.typicode.com/posts'
             );
 
             this.isLoading = false;
