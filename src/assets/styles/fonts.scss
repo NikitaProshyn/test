@@ -3,6 +3,28 @@
    font-style: normal;
 }
 
+@mixin H1 {
+   @include open-sans;
+   font-size: 3rem;
+   font-weight: 700;
+   line-height: 2.375rem;
+   @include mobile {
+      font-size: 1.5rem;
+      line-height: 2.0625rem;
+   }
+}
+
+@mixin H2 {
+   @include open-sans;
+   font-size: 2rem;
+   font-weight: 700;
+   line-height: 2rem;
+   @include mobile {
+      font-size: 1rem;
+      line-height: 1.8rem;
+   }
+}
+
 @mixin info-text {
    @include open-sans();
    font-size: 1.5rem;
@@ -15,4 +37,11 @@
    font-size: 1rem;
    line-height: 1.5rem;
    font-weight: 500;
+}
+
+@mixin bold-default {
+   @include open-sans;
+   font-weight: 700;
+   font-size: 1.25rem;
+   line-height: 1.375rem;
 }

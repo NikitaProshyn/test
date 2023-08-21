@@ -1,53 +1,138 @@
 <template>
    <div :class="$style.container">
-      <span :class="$style.info"
-         >Для редактирования нажмите на карточку и в поле ввода отредактируйте
-         значение</span
-      >
-      <div :class="$style.cards">
-         <div
-            v-for="(card, index) in cards"
-            :key="index"
-            :class="[$style.card, { [$style.chosenCard]: card.isOpen }]"
-            @click="handleOpenCard(index)"
-         >
-            <span :class="$style.name">Name: {{ card.name }}</span>
-            <span :class="$style.value">Value: {{ card.value }}</span>
-            <form v-if="card.isOpen" :class="$style.form">
-               <input
-                  v-model="card.value"
-                  type="text"
-                  placeholder="Введите value"
-                  :class="$style.input"
-                  @click.stop
-               />
-            </form>
+      <InputSearch
+         v-model="search"
+         placeholder="Filter by author"
+         :disabled="isLoading"
+         :class="$style.inputSearch"
+         @search="handleSearch"
+      ></InputSearch>
+
+      <div v-if="!isLoading" :class="$style.cardsWrapper">
+         <div v-if="postsWithUserName.length" :class="$style.cards">
+            <PostCard
+               v-for="post of postsWithUserName"
+               :key="post.id"
+               :title="post.title"
+               :description="post.body"
+               :authorName="post.authorName"
+            />
          </div>
+         <span v-else :class="$style.infoMessage"
+            >К сожалению, ничего не найдено</span
+         >
       </div>
+      <span v-else :class="$style.loading">Загрузка...</span>
    </div>
 </template>
 <script>
-import cardsJson from '@/assets/cards.json';
+import axios from 'axios';
+
+import PostCard from '@/components/molecules/PostCard.vue';
+import InputSearch from '@/components/atoms/InputSearch.vue';
 
 export default {
+   components: {
+      PostCard,
+      InputSearch,
+   },
    data() {
       return {
-         cards: [],
+         users: [],
+         posts: [],
+         search: '',
+         isLoading: false,
       };
    },
-   created() {
-      this.cards = cardsJson.map((card) => ({
-         ...card,
-         isOpen: false,
-      }));
-   },
-   methods: {
-      handleOpenCard(cardIndex) {
-         this.cards = this.cards.map((card, index) => {
-            return cardIndex === index && !card.isOpen
-               ? { ...card, isOpen: true }
-               : { ...card, isOpen: false };
+   computed: {
+      postsWithUserName() {
+         const arrayWithPostsAndUserName = [];
+
+         this.posts?.forEach((post) => {
+            this.users?.forEach((user) => {
+               if (post.userId === user.id) {
+                  arrayWithPostsAndUserName.push({
+                     ...post,
+                     authorName: user.name,
+                  });
+               }
+            });
          });
+
+         return arrayWithPostsAndUserName;
+      },
+   },
+   watch: {
+      async search() {
+         if (!this.search) {
+            await this.getUsers();
+         }
+      },
+   },
+   async created() {
+      await this.getPosts();
+      await this.getUsers();
+   },
+
+   methods: {
+      async getPosts() {
+         try {
+            this.isLoading = true;
+            const response = await axios(
+               'https://jsonplaceholder.typicode.com/posts?limit=20'
+            );
+
+            this.isLoading = false;
+
+            response.status === 200
+               ? (this.posts = response.data)
+               : new Error(`API error, status: ${response.status}`);
+         } catch (e) {
+            this.isLoading = false;
+            throw new Error('Network error, try again later');
+         }
+      },
+      async getUsers() {
+         try {
+            this.isLoading = true;
+            const response = await axios(
+               'https://jsonplaceholder.typicode.com/users'
+            );
+            this.isLoading = false;
+
+            response.status === 200
+               ? (this.users = response.data)
+               : new Error(`API error, status: ${response.status}`);
+         } catch (e) {
+            this.isLoading = false;
+            throw new Error('Network error, try again later');
+         }
+      },
+      async getUserById(id) {
+         try {
+            this.isLoading = true;
+            const response = await axios(
+               `https://jsonplaceholder.typicode.com/users?id=${id}`
+            );
+
+            this.isLoading = false;
+
+            response.status === 200
+               ? (this.users = response.data)
+               : new Error(`API error, status: ${response.status}`);
+         } catch (e) {
+            this.isLoading = false;
+            throw new Error('Network error, try again later');
+         }
+      },
+      async handleSearch() {
+         if (this.search) {
+            const currentUserId = this.users?.find((user) =>
+               user.name.toLowerCase().includes(this.search.toLowerCase())
+            )?.id;
+
+            await this.getUserById(currentUserId);
+         }
       },
    },
 };
@@ -55,65 +140,46 @@ export default {
 <style lang="scss" module>
 .container {
    @include container;
-   display: flex;
-   flex-direction: column;
-   gap: 3rem;
-   padding-top: 3rem;
+   margin-top: 5rem;
 
-   .form {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
+   .inputSearch {
+      justify-content: center;
+      margin-bottom: 3rem;
+   }
 
-      .input {
-         padding: 0.25rem;
-         border-radius: 0.5rem;
-         border: none;
+   .cardsWrapper {
+      .cards {
+         display: grid;
+         grid-template-columns: repeat(auto-fill, minmax(14.375rem, 1fr));
+         gap: 1.5rem;
       }
-   }
 
-   .info {
-      @include info-text;
-   }
-
-   .cards {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1.5rem;
-      .card {
+      .infoMessage {
+         @include H2;
          display: flex;
-         flex-direction: column;
-         gap: 1rem;
-         min-height: 7rem;
-         padding: 3rem;
-         border: 0.063rem solid $black;
-         border-radius: 1rem;
-         background-color: $white-rgba;
-         cursor: pointer;
-         transition: 0.3s all ease-in;
-
-         &:hover {
-            transform: scale(1.05);
-         }
-
-         .name {
-            @include text-default;
-         }
-
-         .value {
-            @include text-default;
-         }
+         justify-content: center;
+         align-items: center;
+         width: 100%;
+         white-space: nowrap;
+         margin-top: 18rem;
+         color: $black;
       }
+   }
 
-      .chosenCard {
-         background-color: $gold;
+   .loading {
+      @include H1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 18rem;
+      color: $black;
+   }
 
-         .name {
-            color: $white;
-         }
-
-         .value {
-            color: $white;
+   @include custom(630) {
+      .cardsWrapper {
+         .infoMessage {
+            text-align: center;
+            white-space: normal;
          }
       }
    }

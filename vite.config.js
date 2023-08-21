@@ -17,9 +17,22 @@ export default defineConfig({
             additionalData: `@import "@/assets/styles/colors.scss";
                              @import "@/assets/styles/grid.scss";
                              @import "@/assets/styles/fonts.scss";
-                             @import "@/assets/styles/commons.scss";`,
+                             @import "@/assets/styles/commons.scss";
+                             @import "@/assets/styles/breakpoints.scss";`,
          },
       },
+   },
+   chainWebpack: (config) => {
+      const svgRule = config.module.rule('svg');
+
+      svgRule.uses.clear();
+
+      svgRule
+         .use('babel-loader')
+         .loader('babel-loader')
+         .end()
+         .use('vue-svg-loader')
+         .loader('vue-svg-loader');
    },
    base: '',
 });
