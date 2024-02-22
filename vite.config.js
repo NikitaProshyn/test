@@ -2,10 +2,11 @@ import { fileURLToPath, URL } from 'node:url';
 
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import svgLoader from 'vite-svg-loader';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-   plugins: [vue()],
+   plugins: [vue(), svgLoader()],
    resolve: {
       alias: {
          '@': fileURLToPath(new URL('./src', import.meta.url)),
@@ -18,7 +19,8 @@ export default defineConfig({
                              @import "@/assets/styles/grid.scss";
                              @import "@/assets/styles/fonts.scss";
                              @import "@/assets/styles/commons.scss";
-                             @import "@/assets/styles/breakpoints.scss";`,
+                             @import "@/assets/styles/breakpoints.scss";
+                             @import "@/assets/styles/z-indexes.scss";`,
          },
       },
    },

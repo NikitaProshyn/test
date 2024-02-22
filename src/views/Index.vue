@@ -1,185 +1,193 @@
 <template>
    <div :class="$style.container">
-      <InputSearch
-         v-model="search"
-         placeholder="Filter by author"
-         :disabled="isLoading"
-         :class="$style.inputSearch"
-         @search="handleSearch"
-      ></InputSearch>
-
-      <div v-if="!isLoading" :class="$style.cardsWrapper">
-         <div v-if="postsWithUserName.length" :class="$style.cards">
-            <PostCard
-               v-for="post of postsWithUserName"
-               :key="post.id"
-               :title="post.title"
-               :description="post.body"
-               :authorName="post.authorName"
-            />
+      <div :class="$style.content">
+         <div :class="$style.page">
+            <div :class="$style.userWrapper">
+               <span :class="$style.name">Anton</span>
+               <div :class="$style.pointsWrapper">
+                  <span :class="$style.points">{{ state.currentPoints }}</span>
+                  <div :class="$style.coinImg">
+                     <img src="/coin.webp" alt="coin" />
+                  </div>
+               </div>
+            </div>
+            <div :class="$style.mainWrapper">
+               <div :class="$style.closeImg">
+                  <img src="/close.webp" alt="close" />
+               </div>
+               <div :class="$style.questionWrapper">
+                  <div :class="$style.questionTextsWrapper">
+                     <span :class="$style.questionWrapperText"
+                        >Choose the right answer</span
+                     >
+                     <span :class="$style.question"
+                        >Which shape shows thirds?</span
+                     >
+                  </div>
+                  <div :class="$style.taskImg">
+                     <img src="/task.webp" alt="task" />
+                  </div>
+               </div>
+               <div :class="$style.bulbImage" @click="state.isOpenModal = true">
+                  <img src="/bulb.webp" alt="bulb" />
+               </div>
+            </div>
          </div>
-         <span v-else :class="$style.infoMessage"
-            >К сожалению, ничего не найдено</span
-         >
+         <div :class="$style.actions">
+            <RadioButtonAtom
+               v-for="answerOption of ANSWER_OPTIONS"
+               :key="answerOption.id"
+               :value="answerOption.option"
+               :is-checked="state.currentAnswer === answerOption.option"
+               @change="state.currentAnswer = $event"
+               ><span>{{ answerOption.option }}</span></RadioButtonAtom
+            >
+            <ButtonAtom
+               :disabled="!state.currentAnswer"
+               @click="handleCheckRightAnswer"
+            >
+               <span :class="$style.checkButton">Check</span>
+            </ButtonAtom>
+         </div>
+         <ModalAtom
+            :is-open="state.isOpenModal"
+            @close="state.isOpenModal = !state.isOpenModal"
+         />
       </div>
-      <span v-else :class="$style.loading">Загрузка...</span>
    </div>
 </template>
-<script>
-import axios from 'axios';
+<script setup>
+import { reactive } from 'vue';
 
-import PostCard from '@/components/molecules/PostCard.vue';
-import InputSearch from '@/components/atoms/InputSearch.vue';
+import answer from '@/assets/answer.json';
 
-export default {
-   components: {
-      PostCard,
-      InputSearch,
-   },
-   data() {
-      return {
-         users: [],
-         posts: [],
-         search: '',
-         isLoading: false,
-      };
-   },
-   computed: {
-      postsWithUserName() {
-         const arrayWithPostsAndUserName = [];
+import ButtonAtom from '@/components/atoms/Button.vue';
+import RadioButtonAtom from '@/components/atoms/RadioButton.vue';
+import ModalAtom from '@/components/atoms/Modal.vue';
 
-         this.posts?.forEach((post) => {
-            this.users?.forEach((user) => {
-               if (post.userId === user.id) {
-                  arrayWithPostsAndUserName.push({
-                     ...post,
-                     authorName: user.name,
-                  });
-               }
-            });
-         });
+import { ANSWER_OPTIONS } from '@/constants/answerOptions';
 
-         return arrayWithPostsAndUserName;
-      },
-   },
-   watch: {
-      async search() {
-         if (!this.search) {
-            await this.getUsers();
-         }
-      },
-   },
-   async created() {
-      await this.getPosts();
-      await this.getUsers();
-   },
+const state = reactive({
+   currentAnswer: '',
+   currentPoints: 0,
+   isOpenModal: false,
+});
 
-   methods: {
-      async getPosts() {
-         try {
-            this.isLoading = true;
-            const response = await axios(
-               'https://jsonplaceholder.typicode.com/posts'
-            );
+const handleCheckRightAnswer = () => {
+   if (!state.currentAnswer) return;
 
-            this.isLoading = false;
+   if (state.currentAnswer !== answer.rightAnswer) {
+      alert(`Sorry, answer: ${state.currentAnswer} incorrect, try again.`);
+      state.currentAnswer = '';
+      return;
+   }
 
-            response.status === 200
-               ? (this.posts = response.data)
-               : new Error(`API error, status: ${response.status}`);
-         } catch (e) {
-            this.isLoading = false;
-            throw new Error('Network error, try again later');
-         }
-      },
-      async getUsers() {
-         try {
-            this.isLoading = true;
-            const response = await axios(
-               'https://jsonplaceholder.typicode.com/users'
-            );
-            this.isLoading = false;
-
-            response.status === 200
-               ? (this.users = response.data)
-               : new Error(`API error, status: ${response.status}`);
-         } catch (e) {
-            this.isLoading = false;
-            throw new Error('Network error, try again later');
-         }
-      },
-      async getUserById(id) {
-         try {
-            this.isLoading = true;
-            const response = await axios(
-               `https://jsonplaceholder.typicode.com/users?id=${id}`
-            );
-
-            this.isLoading = false;
-
-            response.status === 200
-               ? (this.users = response.data)
-               : new Error(`API error, status: ${response.status}`);
-         } catch (e) {
-            this.isLoading = false;
-            throw new Error('Network error, try again later');
-         }
-      },
-      async handleSearch() {
-         if (this.search) {
-            const currentUserId = this.users?.find((user) =>
-               user.name.toLowerCase().includes(this.search.toLowerCase())
-            )?.id;
-
-            await this.getUserById(currentUserId);
-         }
-      },
-   },
+   alert(
+      `Congratulations, your answer is correct, You have been awarded 1000 points`
+   );
+   state.currentPoints += 1000;
+   state.currentAnswer = '';
 };
 </script>
 <style lang="scss" module>
 .container {
-   @include container;
-   margin-top: 5rem;
+   min-height: 100vh;
+   height: 100%;
+   display: flex;
+   flex-direction: column;
+   background-color: rgb(242, 242, 242);
 
-   .inputSearch {
-      justify-content: center;
-      margin-bottom: 3rem;
-   }
+   .content {
+      flex: 1 1 auto;
 
-   .cardsWrapper {
-      .cards {
-         display: grid;
-         grid-template-columns: repeat(auto-fill, minmax(14.375rem, 1fr));
-         gap: 1.5rem;
-      }
-
-      .infoMessage {
-         @include H2;
+      .page {
+         @include container;
          display: flex;
-         justify-content: center;
-         align-items: center;
-         width: 100%;
-         white-space: nowrap;
-         margin-top: 18rem;
-         color: $black;
+         flex-direction: column;
+         gap: 3rem;
+         margin-top: 2rem;
+
+         .closeImg,
+         .bulbImage {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0.5rem;
+            background-color: $light-gray;
+            cursor: pointer;
+         }
+
+         .userWrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.5rem;
+
+            .pointsWrapper {
+               display: flex;
+               gap: 0.5rem;
+               align-items: center;
+            }
+         }
+
+         .mainWrapper {
+            display: flex;
+            align-items: flex-start;
+            gap: 1.5rem;
+            justify-content: space-between;
+
+            .questionWrapper {
+               display: flex;
+               flex-direction: column;
+               align-items: center;
+               gap: 7rem;
+
+               .questionTextsWrapper {
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  gap: 1.5rem;
+                  text-align: center;
+                  .questionWrapperText {
+                     @include main($isBold: false);
+                     color: $black;
+                  }
+
+                  .question {
+                     @include H3;
+                     color: $black;
+                  }
+               }
+
+               .taskImg {
+                  max-width: 45rem;
+                  width: 100%;
+                  height: 100%;
+                  max-height: 10rem;
+
+                  img {
+                     width: 100%;
+                     height: 100%;
+                     object-fit: cover;
+                  }
+               }
+            }
+         }
       }
-   }
 
-   .loading {
-      @include H1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-top: 18rem;
-      color: $black;
-   }
-
-   @include custom(630) {
-      .cardsWrapper {
-         .infoMessage {
-            text-align: center;
-            white-space: normal;
+      .actions {
+         position: fixed;
+         bottom: 0;
+         left: 0;
+         display: flex;
+         align-items: center;
+         gap: 2rem;
+         justify-content: space-between;
+         padding: 0 1rem 1rem;
+         width: 100%;
+         .checkButton {
+            @include main;
+            color: $black;
          }
       }
    }
