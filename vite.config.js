@@ -37,4 +37,14 @@ export default defineConfig({
          .loader('vue-svg-loader');
    },
    base: '',
+   server: {
+      host: true,
+      strictPort: true,
+      proxy: {
+         '/api': {
+            target: 'https://dev-api.komtrans.by',
+            changeOrigin: true,
+         },
+      },
+   },
 });

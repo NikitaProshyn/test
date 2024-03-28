@@ -1,0 +1,9 @@
+version: '3.7'
+
+services:
+   ADW-ADMIN-DEV:
+      container_name: ADW-ADMIN-DEV
+      image: test-project
+      restart: always
+      ports:
+         - '6102:4173'

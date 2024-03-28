@@ -1,0 +1,8 @@
+version: '3.7'
+
+services:
+   ADW-ADMIN-DEV:
+      image: test-project
+      build:
+         context: ../
+         dockerfile: ./deployment/Dockerfile

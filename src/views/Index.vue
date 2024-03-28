@@ -1,93 +1,137 @@
 <template>
    <div :class="$style.container">
-      <div :class="$style.content">
-         <div :class="$style.page">
-            <div :class="$style.userWrapper">
-               <span :class="$style.name">Anton</span>
-               <div :class="$style.pointsWrapper">
-                  <span :class="$style.points">{{ state.currentPoints }}</span>
-                  <div :class="$style.coinImg">
-                     <img src="/coin.webp" alt="coin" />
-                  </div>
-               </div>
-            </div>
-            <div :class="$style.mainWrapper">
-               <div :class="$style.closeImg">
-                  <img src="/close.webp" alt="close" />
-               </div>
-               <div :class="$style.questionWrapper">
-                  <div :class="$style.questionTextsWrapper">
-                     <span :class="$style.questionWrapperText"
-                        >Choose the right answer</span
-                     >
-                     <span :class="$style.question"
-                        >Which shape shows thirds?</span
-                     >
-                  </div>
-                  <div :class="$style.taskImg">
-                     <img src="/task.webp" alt="task" />
-                  </div>
-               </div>
-               <div :class="$style.bulbImage" @click="state.isOpenModal = true">
-                  <img src="/bulb.webp" alt="bulb" />
-               </div>
-            </div>
-         </div>
-         <div :class="$style.actions">
-            <RadioButtonAtom
-               v-for="answerOption of ANSWER_OPTIONS"
-               :key="answerOption.id"
-               :value="answerOption.option"
-               :is-checked="state.currentAnswer === answerOption.option"
-               @change="state.currentAnswer = $event"
-               ><span>{{ answerOption.option }}</span></RadioButtonAtom
+      <template
+         v-for="(section, index) of state.choosingSections"
+         :key="section.id"
+      >
+         <el-select
+            :model-value="state.choosingSections[index + 1]"
+            placeholder="Выберите категорию"
+            value-key="id"
+            @change="handleChangeDefaultParent($event, index)"
+         >
+            <el-option
+               v-for="item in section.childrens"
+               :label="item.name"
+               :value="item"
             >
-            <ButtonAtom
-               :disabled="!state.currentAnswer"
-               @click="handleCheckRightAnswer"
+            </el-option>
+         </el-select>
+      </template>
+      <el-form :model="form" :class="$style.form">
+         <template
+            v-for="modification of state.modifications"
+            :key="modification.id"
+         >
+            <el-input
+               v-if="modification.form_type === MODIFICATION_TYPES.TEXT"
+               :placeholder="modification.name"
+            />
+            <el-select
+               v-if="modification.form_type === MODIFICATION_TYPES.SELECT"
+               :placeholder="modification.name"
             >
-               <span :class="$style.checkButton">Check</span>
-            </ButtonAtom>
-         </div>
-         <ModalAtom
-            :is-open="state.isOpenModal"
-            @close="state.isOpenModal = !state.isOpenModal"
-         />
-      </div>
+               <el-option
+                  v-if="modification.guide_values"
+                  v-for="item of modification.guide_values"
+                  :label="item.value"
+                  :value="item"
+               >
+               </el-option>
+            </el-select>
+            <el-input-number
+               v-if="
+                  modification.form_type === MODIFICATION_TYPES.NUMBER ||
+                  modification.form_type === MODIFICATION_TYPES.INTEGER
+               "
+               :placeholder="modification.name"
+               :class="$style.inputNumber"
+            />
+            <el-form-item
+               v-if="modification.form_type === MODIFICATION_TYPES.CHECKBOX"
+               v-for="checkbox of modification.guide_values.length
+                  ? modification.guide_values.length
+                  : 1"
+               :key="checkbox.id ?? modification.id"
+               :label="modification.name"
+            >
+               <el-checkbox />
+            </el-form-item>
+            <el-form-item
+               v-if="modification.form_type === MODIFICATION_TYPES.RADIO"
+               :label="modification.name"
+            >
+               <el-radio />
+            </el-form-item>
+         </template>
+      </el-form>
    </div>
 </template>
 <script setup>
-import { reactive } from 'vue';
+import { onMounted, reactive } from 'vue';
 
-import answer from '@/assets/answer.json';
+import delivery from '@/delivery';
 
-import ButtonAtom from '@/components/atoms/Button.vue';
-import RadioButtonAtom from '@/components/atoms/RadioButton.vue';
-import ModalAtom from '@/components/atoms/Modal.vue';
-
-import { ANSWER_OPTIONS } from '@/constants/answerOptions';
+import { MODIFICATION_TYPES } from '@/constants/common';
 
 const state = reactive({
-   currentAnswer: '',
-   currentPoints: 0,
-   isOpenModal: false,
+   modifications: [],
+   sectionId: null,
+   choosingSections: [],
+   form: {},
 });
 
-const handleCheckRightAnswer = () => {
-   if (!state.currentAnswer) return;
+const getDefaultSections = async () => {
+   const { value, error } =
+      await delivery.CoreService.SectionActions.getListByParentId(0);
 
-   if (state.currentAnswer !== answer.rightAnswer) {
-      alert(`Sorry, answer: ${state.currentAnswer} incorrect, try again.`);
-      state.currentAnswer = '';
-      return;
+   if (error) return;
+
+   state.choosingSections.push({ id: 0, childrens: value });
+};
+
+const getSections = async (parentId) => {
+   const { value, error } =
+      await delivery.CoreService.SectionActions.getListByParentId(parentId);
+
+   if (error) return;
+
+   return value;
+};
+
+const handleChangeDefaultParent = async (event, index) => {
+   state.sectionId = event.id;
+
+   if (index !== state.choosingSections.length - 1) {
+      state.choosingSections.splice(
+         index + 1,
+         state.choosingSections.length - 1
+      );
    }
 
-   alert(
-      `Congratulations, your answer is correct, You have been awarded 1000 points`
-   );
-   state.currentPoints += 1000;
-   state.currentAnswer = '';
+   const value = await getSections(event.id);
+
+   event.childrens = value;
+
+   state.choosingSections.push(event);
+
+   await getModifications(event.id);
 };
+
+const getModifications = async (sectionId) => {
+   const { value, error } =
+      await delivery.CoreService.ModificationActions.getListBySectionId(
+         sectionId ?? 0
+      );
+
+   if (error) return;
+
+   state.modifications = value.flatMap((modification) => modification.items);
+};
+
+onMounted(async () => {
+   await getDefaultSections();
+});
 </script>
 <style lang="scss" module>
 .container {
@@ -97,98 +141,14 @@ const handleCheckRightAnswer = () => {
    flex-direction: column;
    background-color: rgb(242, 242, 242);
 
-   .content {
-      flex: 1 1 auto;
+   .form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 3rem;
 
-      .page {
-         @include container;
-         display: flex;
-         flex-direction: column;
-         gap: 3rem;
-         margin-top: 2rem;
-
-         .closeImg,
-         .bulbImage {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 0.5rem;
-            background-color: $light-gray;
-            cursor: pointer;
-         }
-
-         .userWrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 0.5rem;
-
-            .pointsWrapper {
-               display: flex;
-               gap: 0.5rem;
-               align-items: center;
-            }
-         }
-
-         .mainWrapper {
-            display: flex;
-            align-items: flex-start;
-            gap: 1.5rem;
-            justify-content: space-between;
-
-            .questionWrapper {
-               display: flex;
-               flex-direction: column;
-               align-items: center;
-               gap: 7rem;
-
-               .questionTextsWrapper {
-                  display: flex;
-                  flex-direction: column;
-                  align-items: center;
-                  gap: 1.5rem;
-                  text-align: center;
-                  .questionWrapperText {
-                     @include main($isBold: false);
-                     color: $black;
-                  }
-
-                  .question {
-                     @include H3;
-                     color: $black;
-                  }
-               }
-
-               .taskImg {
-                  max-width: 45rem;
-                  width: 100%;
-                  height: 100%;
-                  max-height: 10rem;
-
-                  img {
-                     width: 100%;
-                     height: 100%;
-                     object-fit: cover;
-                  }
-               }
-            }
-         }
-      }
-
-      .actions {
-         position: fixed;
-         bottom: 0;
-         left: 0;
-         display: flex;
-         align-items: center;
-         gap: 2rem;
-         justify-content: space-between;
-         padding: 0 1rem 1rem;
-         width: 100%;
-         .checkButton {
-            @include main;
-            color: $black;
-         }
+      .inputNumber {
+         width: 30rem;
       }
    }
 }

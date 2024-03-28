@@ -1,29 +1,9 @@
-# test-project
+To build an application in Docker
 
-This template should help get you started developing with Vue 3 in Vite.
+You need to go to the root of the project
 
-## Recommended IDE Setup
+You need to type  docker-compose -f build/docker-compose.yml build
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
+After raising the image
 
-## Customize configuration
-
-See [Vite Configuration Reference](https://vitejs.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-npm run dev
-```
-
-### Compile and Minify for Production
-
-```sh
-npm run build
-```
+docker-compose -f deployment/docker-compose.yml build
