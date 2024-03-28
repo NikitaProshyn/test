@@ -6,4 +6,4 @@ You need to type  docker-compose -f build/docker-compose.yml build
 
 After raising the image
 
-docker-compose -f deployment/docker-compose.yml build
+docker-compose -f deployment/docker-compose.yml up
