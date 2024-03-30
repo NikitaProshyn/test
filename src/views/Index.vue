@@ -23,46 +23,75 @@
             v-for="modification of state.modifications"
             :key="modification.id"
          >
-            <el-input
-               v-if="modification.form_type === MODIFICATION_TYPES.TEXT"
-               :placeholder="modification.name"
-            />
-            <el-select
-               v-if="modification.form_type === MODIFICATION_TYPES.SELECT"
-               :placeholder="modification.name"
-            >
-               <el-option
-                  v-if="modification.guide_values"
-                  v-for="item of modification.guide_values"
-                  :label="item.value"
-                  :value="item"
+            <h1>{{ modification.name }}</h1>
+            <template v-for="item of modification.items" :key="item.id">
+               <el-select
+                  v-if="item.form_type === MODIFICATION_TYPES.SELECT"
+                  v-model="item.default"
+                  :placeholder="item.name"
+                  :value-key="item.id"
                >
-               </el-option>
-            </el-select>
-            <el-input-number
-               v-if="
-                  modification.form_type === MODIFICATION_TYPES.NUMBER ||
-                  modification.form_type === MODIFICATION_TYPES.INTEGER
-               "
-               :placeholder="modification.name"
-               :class="$style.inputNumber"
-            />
-            <el-form-item
-               v-if="modification.form_type === MODIFICATION_TYPES.CHECKBOX"
-               v-for="checkbox of modification.guide_values.length
-                  ? modification.guide_values.length
-                  : 1"
-               :key="checkbox.id ?? modification.id"
-               :label="modification.name"
-            >
-               <el-checkbox />
-            </el-form-item>
-            <el-form-item
-               v-if="modification.form_type === MODIFICATION_TYPES.RADIO"
-               :label="modification.name"
-            >
-               <el-radio />
-            </el-form-item>
+                  <el-option
+                     v-for="guideValue of item.guide_values"
+                     :label="guideValue.value"
+                     :value="guideValue.value"
+                  >
+                  </el-option>
+               </el-select>
+               <el-form-item
+                  v-if="
+                     item.form_type === MODIFICATION_TYPES.NUMBER ||
+                     modification.form_type === MODIFICATION_TYPES.INTEGER
+                  "
+                  :label="item.name"
+               >
+                  <el-input
+                     v-model="item.default"
+                     placeholder="Введите значение"
+                  />
+               </el-form-item>
+               <el-form-item
+                  v-if="item.form_type === MODIFICATION_TYPES.TEXT"
+                  :label="item.name"
+               >
+                  <el-input
+                     v-model="item.default"
+                     placeholder="Введите значение"
+                  />
+               </el-form-item>
+               <div
+                  v-if="item.form_type === MODIFICATION_TYPES.CHECKBOX"
+                  :class="$style.checkbox"
+               >
+                  <h2 :class="$style.checkboxTitle">{{ item.name }}</h2>
+                  <template
+                     v-if="item.guide_values.length"
+                     v-for="checkbox of item.guide_values"
+                     :key="checkbox.id"
+                  >
+                     <el-form-item :label="checkbox.value">
+                        <el-checkbox />
+                     </el-form-item>
+                  </template>
+               </div>
+               <div
+                  v-if="item.form_type === MODIFICATION_TYPES.RADIO"
+                  :class="$style.checkbox"
+               >
+                  <h2 :class="$style.checkboxTitle">{{ item.name }}</h2>
+                  <template
+                     v-if="item.guide_values.length"
+                     v-for="radio of item.guide_values"
+                     :key="radio.id"
+                  >
+                     <el-radio-group v-model="item.default">
+                        <el-radio :value="radio.value">{{
+                           radio.value
+                        }}</el-radio>
+                     </el-radio-group>
+                  </template>
+               </div>
+            </template>
          </template>
       </el-form>
    </div>
@@ -126,7 +155,7 @@ const getModifications = async (sectionId) => {
 
    if (error) return;
 
-   state.modifications = value.flatMap((modification) => modification.items);
+   state.modifications = value;
 };
 
 onMounted(async () => {
@@ -147,8 +176,13 @@ onMounted(async () => {
       gap: 1rem;
       margin-top: 3rem;
 
-      .inputNumber {
-         width: 30rem;
+      .checkbox {
+         display: flex;
+         flex-direction: column;
+
+         .checkboxTitle {
+            margin-bottom: 1rem;
+         }
       }
    }
 }
