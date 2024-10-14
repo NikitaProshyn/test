@@ -87,11 +87,11 @@ const setQuery = () => {
 }
 
 const getQuery = () => {
-  if (Number(route.query.page) > 1) {
+  if (Number(route.query?.page) > 1) {
     query.page = Number(route.query.page)
   }
 
-  if (route.query.search) {
+  if (route.query?.search) {
     query.search = route.query.search
   }
 }
@@ -114,7 +114,7 @@ const getCatalog = async () => {
 }
 
 watch(
-  () => route.query.search,
+  () => route.query?.search,
   async newVal => {
     query.page = 1
     query.search = newVal
