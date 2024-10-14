@@ -1,12 +1,7 @@
-import connector from './connector';
+import CatalogActions from '@/delivery/CoreService/CatalogActions'
 
-import SectionActions from './SectionActions';
-import ModificationActions from './ModificationActions';
+export default class CoreService {
+  connector = this.connector
 
-class CoreService {
-   connector = connector;
-   SectionActions = SectionActions;
-   ModificationActions = ModificationActions;
+  CatalogActions = new CatalogActions()
 }
-
-export default new CoreService();

@@ -1,13 +1,12 @@
-import axios from 'axios';
-
+import axios from 'axios'
 class ApiConnector {
-   connector;
+  connector
 
-   constructor() {
-      this.connector = axios.create({
-         baseURL: '/api',
-      });
-   }
+  constructor() {
+    this.connector = axios.create({
+      baseURL: '',
+    })
+  }
 }
 
-export default new ApiConnector();
+export default new ApiConnector()

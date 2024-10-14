@@ -1,15 +1,21 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
-   {
-      path: '',
-      component: () => import('@/views/Index.vue'),
-   },
-];
+  {
+    path: '',
+    component: () => import('@/layouts/Default.vue'),
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/Index.vue'), 
+      },
+    ],
+  },
+]
 
 const router = createRouter({
-   history: createWebHistory(),
-   routes,
-});
+  history: createWebHistory(),
+  routes,
+})
 
-export default router;
+export default router

@@ -1,7 +1,5 @@
-import CoreService from './CoreService';
+import CoreService from '@/delivery/CoreService'
 
-class DeliveryLayer {
-   CoreService = CoreService;
+export default class Delivery {
+  CoreService = new CoreService()
 }
-
-export default new DeliveryLayer();

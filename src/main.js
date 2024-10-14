@@ -1,15 +1,15 @@
-import { createApp } from 'vue';
-import { createPinia } from 'pinia';
-import ElementPlus from 'element-plus'
-import 'element-plus/dist/index.css'
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
 
-import router from '@/router';
-import App from '@/App.vue';
+import router from '@/router'
+import App from '@/App.vue'
 
-const app = createApp(App);
+import Delivery from '@/delivery'
 
-app.use(ElementPlus)
-app.use(createPinia());
-app.use(router);
+const app = createApp(App)
 
-app.mount('#app');
+app.use(createPinia())
+app.use(router)
+app.provide('delivery', new Delivery())
+
+app.mount('#app')
